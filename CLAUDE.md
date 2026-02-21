@@ -117,9 +117,6 @@ Use `scripts/jenkins-api.sh` for API interactions (handles crumb authentication 
 # Get job status
 ./scripts/jenkins-api.sh status <job-path>
 ./scripts/jenkins-api.sh status pipeline-2-blueocean/job/pipeline
-
-# Show Job DSL documentation reference
-./scripts/jenkins-api.sh dsl
 ```
 
 **Note:** Job paths use `/job/` between folder and job name (e.g., `folder/job/jobname`).

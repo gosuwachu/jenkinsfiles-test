@@ -28,40 +28,6 @@ api_post() {
 }
 
 case "$1" in
-    dsl)
-        echo "Job DSL API Reference"
-        echo "====================="
-        echo ""
-        echo "Open in browser: $JENKINS_URL/plugin/job-dsl/api-viewer/index.html"
-        echo ""
-        echo "Common paths (append #path/ to URL):"
-        echo "  folder                    - Folder definition"
-        echo "  folder-authorization      - Folder permissions (userPermissions, groupPermissions)"
-        echo "  job                       - Free-style job"
-        echo "  job-authorization         - Job permissions"
-        echo "  pipelineJob               - Pipeline job definition"
-        echo "  pipelineJob-definition    - Pipeline script/SCM config"
-        echo ""
-        echo "Example URLs:"
-        echo "  $JENKINS_URL/plugin/job-dsl/api-viewer/index.html#path/folder-authorization"
-        echo "  $JENKINS_URL/plugin/job-dsl/api-viewer/index.html#path/pipelineJob-definition-cpsScm"
-        echo ""
-        echo "Key methods for folder permissions (matrix-auth > 3.0):"
-        echo "  userPermissions(userName, permissionsList)"
-        echo "  userPermissionAll(userName)"
-        echo "  groupPermissions(groupName, permissionsList)"
-        echo ""
-        echo "Example:"
-        echo "  folder('my-folder') {"
-        echo "      authorization {"
-        echo "          userPermissions('dev1', ["
-        echo "              'hudson.model.Item.Discover',"
-        echo "              'hudson.model.Item.Read',"
-        echo "              'hudson.model.Item.Build'"
-        echo "          ])"
-        echo "      }"
-        echo "  }"
-        ;;
     build)
         if [ -z "$2" ]; then
             echo "Usage: $0 build <job-path>"
@@ -96,12 +62,10 @@ case "$1" in
         echo "  build <job-path>         Trigger a build"
         echo "  log <job-path> [build#]  Get console log (default: lastBuild)"
         echo "  status <job-path>        Get job status"
-        echo "  dsl                      Show Job DSL documentation reference"
         echo ""
         echo "Examples:"
         echo "  $0 build pipeline-2-blueocean/job/pipeline"
         echo "  $0 log pipeline-2-blueocean/job/pipeline 1"
         echo "  $0 status mobile-pipeline/job/trigger"
-        echo "  $0 dsl"
         ;;
 esac
