@@ -12,7 +12,7 @@ Access at http://localhost:8080 (admin/admin)
 
 ## Pipeline Architecture Options
 
-This repo implements 6 different approaches to Jenkins pipelines for comparison:
+This repo implements 5 different approaches to Jenkins pipelines for comparison:
 
 | Folder | Option | Orchestration | Job Type | Re-triggerable |
 |--------|--------|---------------|----------|----------------|
@@ -20,8 +20,7 @@ This repo implements 6 different approaches to Jenkins pipelines for comparison:
 | `pipeline-1-hybrid` | 1: Hybrid | Jenkinsfile `build job:` | Free-style | Yes |
 | `pipeline-2-blueocean` | 2: Blue Ocean | Single Jenkinsfile | Pipeline | Via Blue Ocean |
 | `pipeline-3-skip-params` | 3: Skip Params | Single Jenkinsfile | Pipeline | Via params |
-| `pipeline-4a` | 4A: DSL + Jenkinsfiles | Job DSL triggers | Pipeline | Yes |
-| `pipeline-5b` | 5B: Orchestrator | Jenkinsfile `build job:` | Pipeline | Yes |
+| `pipeline-4a` | 4A: Jenkinsfile + Pipeline Jobs | Jenkinsfile `build job:` | Pipeline | Yes |
 
 ### Option 0: Current (Job DSL Free-Style)
 - **Folder:** `mobile-pipeline`
@@ -47,17 +46,13 @@ This repo implements 6 different approaches to Jenkins pipelines for comparison:
 - **Pros:** Simple, single pipeline
 - **Cons:** Manual parameter management, re-runs entire pipeline
 
-### Option 4A: Job DSL + Pipeline Jobs with Jenkinsfiles
+### Option 4A: Jenkinsfile Orchestrator + Pipeline Jobs
 - **Folder:** `pipeline-4a`
-- **How it works:** Job DSL creates `pipelineJob` entries that read `ci/*.Jenkinsfile`
-- **Pros:** Job implementations versioned, re-triggerable, Job DSL handles triggers
-- **Cons:** Many Jenkinsfiles
+- **How it works:** `ci/trigger.Jenkinsfile` uses `build job:` to call pipeline jobs, each reading their own `ci/*.Jenkinsfile`
+- **Pros:** All pipeline logic in Jenkinsfiles, re-triggerable jobs, job implementations versioned
+- **Cons:** Job DSL still needed to create job definitions
 
-### Option 5B: Jenkinsfile Orchestrator + Pipeline Jobs
-- **Folder:** `pipeline-5b`
-- **How it works:** `Jenkinsfile.5b-orchestrator` uses `build job:` to call pipeline jobs
-- **Pros:** All pipeline logic in Jenkinsfiles, re-triggerable jobs
-- **Cons:** Job DSL still needed to create jobs
+**Note:** `pipelineJob` doesn't support `publishers { downstreamParameterized }`, so Job DSL can only define the jobs, not orchestrate them. Orchestration must be done via Jenkinsfile.
 
 ## Project Structure
 
@@ -65,10 +60,9 @@ This repo implements 6 different approaches to Jenkins pipelines for comparison:
 ├── Jenkinsfile.1-hybrid           # Option 1 orchestrator
 ├── Jenkinsfile.2-blueocean        # Option 2 single pipeline
 ├── Jenkinsfile.3-skip-params      # Option 3 with skip params
-├── Jenkinsfile.5b-orchestrator    # Option 5B orchestrator
 ├── ci/
-│   ├── trigger.Jenkinsfile        # Option 4A trigger
-│   ├── ios-build.Jenkinsfile      # Shared by 4A, 5B
+│   ├── trigger.Jenkinsfile        # Option 4A orchestrator
+│   ├── ios-build.Jenkinsfile      # Used by Option 4A
 │   ├── ios-deploy.Jenkinsfile
 │   ├── android-build.Jenkinsfile
 │   └── ...
@@ -117,3 +111,4 @@ docker-compose build && docker-compose up -d
 - For parameterized-trigger, use `triggerWithNoParameters()` not `parameters { currentBuild() }`
 - The seed job copies DSL files to workspace before processing
 - `pipelineJob` uses `cpsScm` to read Jenkinsfiles from SCM
+- **`pipelineJob` does NOT support `publishers { downstreamParameterized }`** - use Jenkinsfile orchestration instead
