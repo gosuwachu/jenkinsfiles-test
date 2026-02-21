@@ -15,6 +15,14 @@ def folder0 = 'mobile-pipeline'
 
 folder(folder0) {
     description('Option 0: Current - Job DSL free-style jobs with triggers')
+    authorization {
+        userPermissions('dev1', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
 }
 
 job("${folder0}/trigger") {
@@ -127,6 +135,14 @@ def folder1 = 'pipeline-1-hybrid'
 
 folder(folder1) {
     description('Option 1: Hybrid - Jenkinsfile orchestrates free-style jobs')
+    authorization {
+        userPermissions('dev1', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
 }
 
 // Orchestrator pipeline job
@@ -196,6 +212,14 @@ def folder2 = 'pipeline-2-blueocean'
 
 folder(folder2) {
     description('Option 2: Blue Ocean - Single Jenkinsfile, restart from stage in Blue Ocean UI')
+    authorization {
+        userPermissions('dev1', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
 }
 
 pipelineJob("${folder2}/pipeline") {
@@ -223,6 +247,14 @@ def folder3 = 'pipeline-3-skip-params'
 
 folder(folder3) {
     description('Option 3: Skip Params - Single Jenkinsfile with SKIP_* parameters')
+    authorization {
+        userPermissions('dev2', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
 }
 
 pipelineJob("${folder3}/pipeline") {
@@ -251,6 +283,14 @@ def folder4a = 'pipeline-4a'
 
 folder(folder4a) {
     description('Option 4A: pipelineJobs reading Jenkinsfiles (each job standalone)')
+    authorization {
+        userPermissions('dev2', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
 }
 
 pipelineJob("${folder4a}/trigger") {

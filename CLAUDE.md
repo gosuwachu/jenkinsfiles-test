@@ -8,7 +8,14 @@ A Docker-based Jenkins test environment demonstrating multiple pipeline architec
 ./scripts/start.sh
 ```
 
-Access at http://localhost:8080 (admin/admin)
+Access at http://localhost:8080
+
+**Users:**
+| User | Password | Access |
+|------|----------|--------|
+| admin | admin | Full administrator |
+| dev1 | dev1 | mobile-pipeline, pipeline-1-hybrid, pipeline-2-blueocean |
+| dev2 | dev2 | pipeline-3-skip-params, pipeline-4a |
 
 ## Pipeline Architecture Options
 
@@ -104,6 +111,33 @@ Only rebuild Docker when changing `Dockerfile`, `plugins.txt`, or `casc/jenkins.
 ```bash
 docker-compose build && docker-compose up -d
 ```
+
+## Per-Project Permissions
+
+This environment uses **Project-based Matrix Authorization Strategy** (via `matrix-auth` plugin) to restrict folder visibility per user.
+
+**Configuration:**
+- Global permissions in `casc/jenkins.yaml` (Overall/Read for authenticated users)
+- Folder permissions in `jobs/pipeline.groovy` using Job DSL
+
+**Job DSL syntax for folder permissions (matrix-auth > 3.0):**
+```groovy
+folder('my-folder') {
+    authorization {
+        userPermissions('username', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
+}
+```
+
+**Available methods:**
+- `userPermissions(userName, permissionsList)` - grant multiple permissions to a user
+- `userPermissionAll(userName)` - grant all permissions to a user
+- `groupPermissions(groupName, permissionsList)` - grant permissions to a group
 
 ## Job DSL Notes
 
