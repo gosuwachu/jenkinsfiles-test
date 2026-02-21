@@ -4,7 +4,7 @@
 // ============================================
 
 def repoUrl = 'file:///var/jenkins_home/repo'
-def branch = '*/master'
+def branch = '*/main'
 
 // ============================================
 // OPTION 0: Current - Job DSL Free-Style Jobs
