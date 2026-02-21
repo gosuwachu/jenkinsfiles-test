@@ -1,0 +1,5 @@
+job-dsl
+delivery-pipeline-plugin
+parameterized-trigger
+configuration-as-code
+git

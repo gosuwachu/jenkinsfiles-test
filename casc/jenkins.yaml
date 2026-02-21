@@ -1,0 +1,26 @@
+jenkins:
+  systemMessage: "Jenkins Test Environment - Configured automatically via JCasC"
+  numExecutors: 4
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+
+unclassified:
+  location:
+    url: http://localhost:8080/
+
+jobs:
+  - file: /var/jenkins_home/jobs-dsl/pipeline.groovy
