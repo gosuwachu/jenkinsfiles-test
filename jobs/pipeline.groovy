@@ -196,8 +196,9 @@ job('seed-job') {
     description('Regenerates all pipeline jobs from DSL scripts')
 
     steps {
+        shell('cp /var/jenkins_home/jobs-dsl/*.groovy .')
         jobDsl {
-            targets('/var/jenkins_home/jobs-dsl/*.groovy')
+            targets('*.groovy')
             removedJobAction('DELETE')
             removedViewAction('DELETE')
             lookupStrategy('SEED_JOB')

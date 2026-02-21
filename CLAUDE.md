@@ -61,3 +61,9 @@ Do NOT rebuild Docker for job changes. Only rebuild Docker when changing:
 # Only needed for Dockerfile/plugins/casc changes
 docker-compose build && docker-compose up -d
 ```
+
+## Job DSL Notes
+
+- Job DSL `targets()` only accepts relative paths (Ant GLOB), not absolute paths
+- For parameterized-trigger, use `triggerWithNoParameters()` not `parameters { currentBuild() }`
+- The seed job copies DSL files to workspace before processing
