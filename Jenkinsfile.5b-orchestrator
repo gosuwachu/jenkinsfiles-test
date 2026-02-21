@@ -1,0 +1,65 @@
+// Option 5B: Jenkinsfile Orchestrator - calls pipeline jobs
+// Each job reads its own ci/*.Jenkinsfile
+// Jobs are re-triggerable individually
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Start') {
+            steps {
+                echo 'Starting Mobile CI/CD Pipeline (5B Orchestrator)...'
+            }
+        }
+
+        stage('Build & Quality') {
+            parallel {
+                stage('iOS Build') {
+                    steps {
+                        build job: 'pipeline-5b/ios-build', wait: true
+                    }
+                }
+                stage('Android Build') {
+                    steps {
+                        build job: 'pipeline-5b/android-build', wait: true
+                    }
+                }
+                stage('iOS Tests') {
+                    steps {
+                        build job: 'pipeline-5b/ios-unit-tests', wait: true
+                    }
+                }
+                stage('Android Tests') {
+                    steps {
+                        build job: 'pipeline-5b/android-unit-tests', wait: true
+                    }
+                }
+                stage('iOS Lint') {
+                    steps {
+                        build job: 'pipeline-5b/ios-linter', wait: true
+                    }
+                }
+                stage('Android Lint') {
+                    steps {
+                        build job: 'pipeline-5b/android-linter', wait: true
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            parallel {
+                stage('iOS Deploy') {
+                    steps {
+                        build job: 'pipeline-5b/ios-deploy', wait: true
+                    }
+                }
+                stage('Android Deploy') {
+                    steps {
+                        build job: 'pipeline-5b/android-deploy', wait: true
+                    }
+                }
+            }
+        }
+    }
+}

@@ -3,3 +3,6 @@ delivery-pipeline-plugin
 parameterized-trigger
 configuration-as-code
 git
+workflow-aggregator
+pipeline-build-step
+blueocean

@@ -1,36 +1,38 @@
 // ============================================
 // Mobile CI/CD Pipeline - Job DSL Script
+// All Architecture Options for Comparison
 // ============================================
 
-def pipelineFolder = 'mobile-pipeline'
+def repoUrl = 'file:///var/jenkins_home/repo'
+def branch = '*/master'
 
-// Create folder for pipeline jobs
-folder(pipelineFolder) {
-    description('Mobile CI/CD Pipeline')
+// ============================================
+// OPTION 0: Current - Job DSL Free-Style Jobs
+// Folder: mobile-pipeline
+// ============================================
+
+def folder0 = 'mobile-pipeline'
+
+folder(folder0) {
+    description('Option 0: Current - Job DSL free-style jobs with triggers')
 }
 
-// --------------------------------------------
-// TRIGGER JOB - Entry point for the pipeline
-// --------------------------------------------
-job("${pipelineFolder}/trigger") {
+job("${folder0}/trigger") {
     displayName('Pipeline Trigger')
     description('Triggers the entire mobile CI/CD pipeline')
-
     deliveryPipelineConfiguration('Trigger', 'Start Pipeline')
-
     steps {
         shell('echo "hello world"')
     }
-
     publishers {
         downstreamParameterized {
             trigger([
-                "${pipelineFolder}/ios-build",
-                "${pipelineFolder}/android-build",
-                "${pipelineFolder}/ios-unit-tests",
-                "${pipelineFolder}/android-unit-tests",
-                "${pipelineFolder}/ios-linter",
-                "${pipelineFolder}/android-linter"
+                "${folder0}/ios-build",
+                "${folder0}/android-build",
+                "${folder0}/ios-unit-tests",
+                "${folder0}/android-unit-tests",
+                "${folder0}/ios-linter",
+                "${folder0}/android-linter"
             ].join(', ')) {
                 condition('SUCCESS')
                 triggerWithNoParameters()
@@ -39,22 +41,13 @@ job("${pipelineFolder}/trigger") {
     }
 }
 
-// --------------------------------------------
-// iOS BUILD AND DEPLOY
-// --------------------------------------------
-job("${pipelineFolder}/ios-build") {
+job("${folder0}/ios-build") {
     displayName('iOS Build')
-    description('Build iOS application')
-
     deliveryPipelineConfiguration('Build', 'iOS Build')
-
-    steps {
-        shell('echo "hello world"')
-    }
-
+    steps { shell('echo "hello world"') }
     publishers {
         downstreamParameterized {
-            trigger("${pipelineFolder}/ios-deploy") {
+            trigger("${folder0}/ios-deploy") {
                 condition('SUCCESS')
                 triggerWithNoParameters()
             }
@@ -62,33 +55,19 @@ job("${pipelineFolder}/ios-build") {
     }
 }
 
-job("${pipelineFolder}/ios-deploy") {
+job("${folder0}/ios-deploy") {
     displayName('iOS Deploy')
-    description('Deploy iOS application')
-
     deliveryPipelineConfiguration('Deploy', 'iOS Deploy')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// ANDROID BUILD AND DEPLOY
-// --------------------------------------------
-job("${pipelineFolder}/android-build") {
+job("${folder0}/android-build") {
     displayName('Android Build')
-    description('Build Android application')
-
     deliveryPipelineConfiguration('Build', 'Android Build')
-
-    steps {
-        shell('echo "hello world"')
-    }
-
+    steps { shell('echo "hello world"') }
     publishers {
         downstreamParameterized {
-            trigger("${pipelineFolder}/android-deploy") {
+            trigger("${folder0}/android-deploy") {
                 condition('SUCCESS')
                 triggerWithNoParameters()
             }
@@ -96,105 +75,475 @@ job("${pipelineFolder}/android-build") {
     }
 }
 
-job("${pipelineFolder}/android-deploy") {
+job("${folder0}/android-deploy") {
     displayName('Android Deploy')
-    description('Deploy Android application')
-
     deliveryPipelineConfiguration('Deploy', 'Android Deploy')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// iOS UNIT TESTS
-// --------------------------------------------
-job("${pipelineFolder}/ios-unit-tests") {
+job("${folder0}/ios-unit-tests") {
     displayName('iOS Unit Tests')
-    description('Run iOS unit tests')
-
     deliveryPipelineConfiguration('Test', 'iOS Unit Tests')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// ANDROID UNIT TESTS
-// --------------------------------------------
-job("${pipelineFolder}/android-unit-tests") {
+job("${folder0}/android-unit-tests") {
     displayName('Android Unit Tests')
-    description('Run Android unit tests')
-
     deliveryPipelineConfiguration('Test', 'Android Unit Tests')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// iOS LINTER
-// --------------------------------------------
-job("${pipelineFolder}/ios-linter") {
+job("${folder0}/ios-linter") {
     displayName('iOS Linter')
-    description('Run iOS linter')
-
     deliveryPipelineConfiguration('Quality', 'iOS Linter')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// ANDROID LINTER
-// --------------------------------------------
-job("${pipelineFolder}/android-linter") {
+job("${folder0}/android-linter") {
     displayName('Android Linter')
-    description('Run Android linter')
-
     deliveryPipelineConfiguration('Quality', 'Android Linter')
-
-    steps {
-        shell('echo "hello world"')
-    }
+    steps { shell('echo "hello world"') }
 }
 
-// --------------------------------------------
-// DELIVERY PIPELINE VIEW
-// --------------------------------------------
-deliveryPipelineView('Mobile Pipeline View') {
-    description('Visualization of the Mobile CI/CD Pipeline')
-
+deliveryPipelineView('Option 0 - Mobile Pipeline View') {
+    description('Option 0: Job DSL free-style jobs')
     pipelineInstances(5)
-    showAggregatedPipeline(false)
     columns(1)
     updateInterval(2)
-
     enableManualTriggers(true)
     allowPipelineStart(true)
     allowRebuild(true)
-
-    showAvatars(true)
-    showChangeLog(true)
-    showTotalBuildTime(true)
-    showDescription(true)
-
     pipelines {
-        component('Mobile CI/CD', "${pipelineFolder}/trigger")
+        component('Mobile CI/CD', "${folder0}/trigger")
     }
 }
 
-// --------------------------------------------
-// SEED JOB (for re-running this script)
-// --------------------------------------------
+// ============================================
+// OPTION 1: Hybrid - Jenkinsfile orchestrates Free-Style Jobs
+// Folder: pipeline-1-hybrid
+// ============================================
+
+def folder1 = 'pipeline-1-hybrid'
+
+folder(folder1) {
+    description('Option 1: Hybrid - Jenkinsfile orchestrates free-style jobs')
+}
+
+// Orchestrator pipeline job
+pipelineJob("${folder1}/orchestrator") {
+    displayName('Pipeline Orchestrator')
+    description('Reads Jenkinsfile.1-hybrid and orchestrates free-style jobs')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('Jenkinsfile.1-hybrid')
+        }
+    }
+}
+
+// Free-style jobs (no triggers - orchestrator handles flow)
+job("${folder1}/ios-build") {
+    displayName('iOS Build')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/ios-deploy") {
+    displayName('iOS Deploy')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/android-build") {
+    displayName('Android Build')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/android-deploy") {
+    displayName('Android Deploy')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/ios-unit-tests") {
+    displayName('iOS Unit Tests')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/android-unit-tests") {
+    displayName('Android Unit Tests')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/ios-linter") {
+    displayName('iOS Linter')
+    steps { shell('echo "hello world"') }
+}
+
+job("${folder1}/android-linter") {
+    displayName('Android Linter')
+    steps { shell('echo "hello world"') }
+}
+
+// ============================================
+// OPTION 2: Blue Ocean - Single Jenkinsfile with restart from stage
+// Folder: pipeline-2-blueocean
+// ============================================
+
+def folder2 = 'pipeline-2-blueocean'
+
+folder(folder2) {
+    description('Option 2: Blue Ocean - Single Jenkinsfile, restart from stage in Blue Ocean UI')
+}
+
+pipelineJob("${folder2}/pipeline") {
+    displayName('Mobile Pipeline')
+    description('Single Jenkinsfile - use Blue Ocean UI to restart from stage')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('Jenkinsfile.2-blueocean')
+        }
+    }
+}
+
+// ============================================
+// OPTION 3: Skip Params - Single Jenkinsfile with skip parameters
+// Folder: pipeline-3-skip-params
+// ============================================
+
+def folder3 = 'pipeline-3-skip-params'
+
+folder(folder3) {
+    description('Option 3: Skip Params - Single Jenkinsfile with SKIP_* parameters')
+}
+
+pipelineJob("${folder3}/pipeline") {
+    displayName('Mobile Pipeline')
+    description('Single Jenkinsfile with skip parameters - re-run with SKIP_* flags to resume')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('Jenkinsfile.3-skip-params')
+        }
+    }
+}
+
+// ============================================
+// OPTION 4A: Job DSL + Pipeline Jobs with Jenkinsfiles
+// Folder: pipeline-4a
+// Note: pipelineJobs don't support publishers{}, so each job is standalone
+// ============================================
+
+def folder4a = 'pipeline-4a'
+
+folder(folder4a) {
+    description('Option 4A: pipelineJobs reading Jenkinsfiles (each job standalone)')
+}
+
+pipelineJob("${folder4a}/trigger") {
+    displayName('Pipeline Trigger')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/trigger.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/ios-build") {
+    displayName('iOS Build')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-build.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/ios-deploy") {
+    displayName('iOS Deploy')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-deploy.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/android-build") {
+    displayName('Android Build')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-build.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/android-deploy") {
+    displayName('Android Deploy')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-deploy.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/ios-unit-tests") {
+    displayName('iOS Unit Tests')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-unit-tests.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/android-unit-tests") {
+    displayName('Android Unit Tests')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-unit-tests.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/ios-linter") {
+    displayName('iOS Linter')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-linter.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder4a}/android-linter") {
+    displayName('Android Linter')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-linter.Jenkinsfile')
+        }
+    }
+}
+
+// ============================================
+// OPTION 5B: Jenkinsfile Orchestrator + Pipeline Jobs
+// Folder: pipeline-5b
+// ============================================
+
+def folder5b = 'pipeline-5b'
+
+folder(folder5b) {
+    description('Option 5B: Jenkinsfile orchestrator + pipelineJobs (re-triggerable)')
+}
+
+// Orchestrator pipeline job
+pipelineJob("${folder5b}/orchestrator") {
+    displayName('Pipeline Orchestrator')
+    description('Reads Jenkinsfile.5b-orchestrator and calls pipeline jobs')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('Jenkinsfile.5b-orchestrator')
+        }
+    }
+}
+
+// Individual pipeline jobs (no triggers - orchestrator handles flow)
+pipelineJob("${folder5b}/ios-build") {
+    displayName('iOS Build')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-build.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/ios-deploy") {
+    displayName('iOS Deploy')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-deploy.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/android-build") {
+    displayName('Android Build')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-build.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/android-deploy") {
+    displayName('Android Deploy')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-deploy.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/ios-unit-tests") {
+    displayName('iOS Unit Tests')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-unit-tests.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/android-unit-tests") {
+    displayName('Android Unit Tests')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-unit-tests.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/ios-linter") {
+    displayName('iOS Linter')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/ios-linter.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${folder5b}/android-linter") {
+    displayName('Android Linter')
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote { url(repoUrl) }
+                    branches(branch)
+                }
+            }
+            scriptPath('ci/android-linter.Jenkinsfile')
+        }
+    }
+}
+
+// ============================================
+// SEED JOB
+// ============================================
+
 job('seed-job') {
     displayName('Seed Job')
     description('Regenerates all pipeline jobs from DSL scripts')
-
     steps {
         shell('cp /var/jenkins_home/jobs-dsl/*.groovy .')
         jobDsl {

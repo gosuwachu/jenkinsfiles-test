@@ -1,7 +1,7 @@
 FROM jenkins/jenkins:lts-jdk17
 
 # Skip setup wizard
-ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
+ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true"
 
 # Install plugins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
@@ -11,8 +11,10 @@ RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 COPY casc/ /var/jenkins_home/casc_configs/
 ENV CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/
 
-# Copy Job DSL scripts
+# Copy Job DSL scripts and Jenkinsfiles
 COPY jobs/ /var/jenkins_home/jobs-dsl/
+COPY ci/ /var/jenkins_home/jobs-dsl/ci/
+COPY Jenkinsfile.* /var/jenkins_home/jobs-dsl/
 
 # Set proper permissions
 USER root
