@@ -100,6 +100,27 @@ docker-compose logs -f
 docker-compose down -v && docker-compose up -d
 ```
 
+## Jenkins API Helper
+
+Use `scripts/jenkins-api.sh` for API interactions (handles crumb authentication automatically):
+
+```bash
+# Trigger a build
+./scripts/jenkins-api.sh build <job-path>
+./scripts/jenkins-api.sh build pipeline-2-blueocean/job/pipeline
+
+# Get console log (default: lastBuild)
+./scripts/jenkins-api.sh log <job-path> [build#]
+./scripts/jenkins-api.sh log pipeline-2-blueocean/job/pipeline
+./scripts/jenkins-api.sh log mobile-pipeline/job/trigger 5
+
+# Get job status
+./scripts/jenkins-api.sh status <job-path>
+./scripts/jenkins-api.sh status pipeline-2-blueocean/job/pipeline
+```
+
+**Note:** Job paths use `/job/` between folder and job name (e.g., `folder/job/jobname`).
+
 ## Modifying Jobs
 
 Edit `jobs/pipeline.groovy` then run the **seed-job** in Jenkins:
@@ -141,8 +162,19 @@ folder('my-folder') {
 
 ## Job DSL Notes
 
+- **Git branch is `main`** (not `master`) - configured in `jobs/pipeline.groovy` as `def branch = '*/main'`
 - Job DSL `targets()` only accepts relative paths (Ant GLOB), not absolute paths
 - For parameterized-trigger, use `triggerWithNoParameters()` not `parameters { currentBuild() }`
 - The seed job copies DSL files to workspace before processing
 - `pipelineJob` uses `cpsScm` to read Jenkinsfiles from SCM
 - **`pipelineJob` does NOT support `publishers { downstreamParameterized }`** - use Jenkinsfile orchestration instead
+
+**Job DSL API Reference:** http://localhost:8080/plugin/job-dsl/api-viewer/index.html (when Jenkins is running)
+
+## Troubleshooting
+
+**"Couldn't find any revision to build"** - Check that the git branch in `jobs/pipeline.groovy` matches the actual branch (should be `*/main`).
+
+**Permission warnings about "ambiguous entries"** - Use explicit `USER:` or `GROUP:` prefixes in CASC, or use `userPermissions()`/`groupPermissions()` in Job DSL.
+
+**Jobs not visible to users** - Ensure folder has `hudson.model.Item.Discover` permission for the user (in addition to `Item.Read`).
