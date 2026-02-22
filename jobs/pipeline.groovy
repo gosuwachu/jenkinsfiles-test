@@ -453,8 +453,8 @@ folder(folder3mb) {
 }
 
 multibranchPipelineJob("${folder3mb}/pipeline") {
-    displayName('Mobile Pipeline (Multibranch)')
-    description('Multibranch pipeline - discovers branches/PRs from GitHub')
+    displayName('Mobile Pipeline (Multibranch) [DISABLED]')
+    description('Multibranch pipeline - discovers branches/PRs from GitHub (temporarily disabled)')
 
     branchSources {
         github {
@@ -462,9 +462,9 @@ multibranchPipelineJob("${folder3mb}/pipeline") {
             scanCredentialsId(githubCredentialsId)
             repoOwner(githubRepoOwner)
             repository(githubRepoName)
-            buildOriginBranch(true)
+            buildOriginBranch(false)
             buildOriginBranchWithPR(false)
-            buildOriginPRHead(true)
+            buildOriginPRHead(false)
             buildOriginPRMerge(false)
             buildForkPRHead(false)
             buildForkPRMerge(false)
@@ -483,11 +483,7 @@ multibranchPipelineJob("${folder3mb}/pipeline") {
         }
     }
 
-    triggers {
-        periodicFolderTrigger {
-            interval('5m')
-        }
-    }
+    // triggers disabled
 }
 
 // ============================================
@@ -511,8 +507,8 @@ folder(folder4amb) {
 
 // Orchestrator - multibranch, discovers branches/PRs
 multibranchPipelineJob("${folder4amb}/trigger") {
-    displayName('Pipeline Trigger (Multibranch)')
-    description('Orchestrator - discovers branches/PRs, triggers child jobs with BRANCH_NAME param')
+    displayName('Pipeline Trigger (Multibranch) [DISABLED]')
+    description('Orchestrator - discovers branches/PRs, triggers child jobs with BRANCH_NAME param (temporarily disabled)')
 
     branchSources {
         github {
@@ -520,9 +516,9 @@ multibranchPipelineJob("${folder4amb}/trigger") {
             scanCredentialsId(githubCredentialsId)
             repoOwner(githubRepoOwner)
             repository(githubRepoName)
-            buildOriginBranch(true)
+            buildOriginBranch(false)
             buildOriginBranchWithPR(false)
-            buildOriginPRHead(true)
+            buildOriginPRHead(false)
             buildOriginPRMerge(false)
             buildForkPRHead(false)
             buildForkPRMerge(false)
@@ -541,11 +537,7 @@ multibranchPipelineJob("${folder4amb}/trigger") {
         }
     }
 
-    triggers {
-        periodicFolderTrigger {
-            interval('5m')
-        }
-    }
+    // triggers disabled
 }
 
 // Child jobs - regular pipelineJobs that accept BRANCH_NAME parameter
