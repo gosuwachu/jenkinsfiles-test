@@ -15,21 +15,22 @@ Access at http://localhost:8080
 |------|----------|--------|
 | admin | admin | Full administrator |
 | dev1 | dev1 | mobile-pipeline, pipeline-1-hybrid, pipeline-2-blueocean |
-| dev2 | dev2 | pipeline-3-skip-params, pipeline-4a, pipeline-3-mb, pipeline-4a-mb |
+| dev2 | dev2 | pipeline-3-skip-params, pipeline-4a, pipeline-3-mb, pipeline-4a-mb, pipeline-4b-mb |
 
 ## Pipeline Architecture Options
 
-This repo implements 7 different approaches to Jenkins pipelines for comparison:
+This repo implements 8 different approaches to Jenkins pipelines for comparison:
 
-| Folder | Option | Orchestration | Job Type | Re-triggerable |
-|--------|--------|---------------|----------|----------------|
-| `mobile-pipeline` | 0: Current | Job DSL triggers | Free-style | Yes |
-| `pipeline-1-hybrid` | 1: Hybrid | Jenkinsfile `build job:` | Free-style | Yes |
-| `pipeline-2-blueocean` | 2: Blue Ocean | Single Jenkinsfile | Pipeline | Via Blue Ocean |
-| `pipeline-3-skip-params` | 3: Skip Params | Single Jenkinsfile | Pipeline | Via params |
-| `pipeline-4a` | 4A: Jenkinsfile + Pipeline Jobs | Jenkinsfile `build job:` | Pipeline | Yes |
-| `pipeline-3-mb` | 3-MB: Skip Params (GitHub) | Single Jenkinsfile | Multibranch | Via params |
-| `pipeline-4a-mb` | 4A-MB: Orchestrator (GitHub) | Jenkinsfile `build job:` | Multibranch + Pipeline | Yes |
+| Folder | Option | Orchestration | Job Type | Re-triggerable | Smart Re-run |
+|--------|--------|---------------|----------|----------------|--------------|
+| `mobile-pipeline` | 0: Current | Job DSL triggers | Free-style | Yes | No |
+| `pipeline-1-hybrid` | 1: Hybrid | Jenkinsfile `build job:` | Free-style | Yes | No |
+| `pipeline-2-blueocean` | 2: Blue Ocean | Single Jenkinsfile | Pipeline | Via Blue Ocean | No |
+| `pipeline-3-skip-params` | 3: Skip Params | Single Jenkinsfile | Pipeline | Via params | No |
+| `pipeline-4a` | 4A: Jenkinsfile + Pipeline Jobs | Jenkinsfile `build job:` | Pipeline | Yes | No |
+| `pipeline-3-mb` | 3-MB: Skip Params (GitHub) | Single Jenkinsfile | Multibranch | Via params | Yes (Checks API) |
+| `pipeline-4a-mb` | 4A-MB: Orchestrator (GitHub) | Jenkinsfile `build job:` | Multibranch + Pipeline | Yes | Yes (Checks API) |
+| `pipeline-4b-mb` | 4B-MB: Orchestrator + Commit Status (GitHub) | Jenkinsfile `build job:` | Multibranch + Pipeline | Yes (child jobs) | N/A (Commit Status) |
 
 ### Option 0: Current (Job DSL Free-Style)
 - **Folder:** `mobile-pipeline`
@@ -63,19 +64,28 @@ This repo implements 7 different approaches to Jenkins pipelines for comparison:
 
 **Note:** `pipelineJob` doesn't support `publishers { downstreamParameterized }`, so Job DSL can only define the jobs, not orchestrate them. Orchestration must be done via Jenkinsfile.
 
-### Option 3-MB: Skip Params Multibranch (GitHub)
+### Option 3-MB: Skip Params Multibranch (GitHub) — with Smart Re-run
 - **Folder:** `pipeline-3-mb`
 - **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
 - **How it works:** Multibranch pipeline discovers branches/PRs from GitHub, runs `Jenkinsfile.3-skip-params`
-- **Pros:** Automatic PR discovery, same skip-params flexibility, GitHub webhook support
-- **Cons:** Manual parameter management, re-runs entire pipeline
+- **Smart re-run:** Detects GitHub Check re-runs, queries Checks API, skips already-passed stages
+- **Pros:** Automatic PR discovery, skip-params flexibility, smart re-run from GitHub
+- **Cons:** Re-run still triggers the pipeline (but only failed stages execute)
 
-### Option 4A-MB: Orchestrator Multibranch + Pipeline Jobs (GitHub)
+### Option 4A-MB: Orchestrator Multibranch + Pipeline Jobs (GitHub) — with Smart Re-run
 - **Folder:** `pipeline-4a-mb`
 - **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
 - **How it works:** Multibranch orchestrator discovers branches/PRs, triggers child `pipelineJob`s passing `BRANCH_NAME` parameter
-- **Pros:** PR discovery, re-triggerable child jobs, all pipeline logic in Jenkinsfiles
+- **Smart re-run:** Detects GitHub Check re-runs, queries Checks API, skips child jobs whose checks already passed
+- **Pros:** PR discovery, re-triggerable child jobs, smart re-run from GitHub
 - **Cons:** Child jobs are not multibranch (regular pipeline jobs with branch parameter)
+
+### Option 4B-MB: Orchestrator + Commit Status API (GitHub)
+- **Folder:** `pipeline-4b-mb`
+- **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
+- **How it works:** Multibranch orchestrator triggers child `pipelineJob`s; each child job publishes its own GitHub commit status (not Checks API)
+- **Pros:** Each child job owns its status reporting, `target_url` links to child job build page, individually re-triggerable from Jenkins
+- **Cons:** No "Re-run" button from GitHub (commit statuses don't support it), no rich check details
 
 ## Project Structure
 
@@ -104,7 +114,7 @@ This repo implements 7 different approaches to Jenkins pipelines for comparison:
     └── start.sh
 ```
 
-**Companion repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app) - contains Jenkinsfiles for multibranch options (3-MB, 4A-MB).
+**Companion repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app) - contains Jenkinsfiles for multibranch options (3-MB, 4A-MB, 4B-MB).
 
 ## Common Commands
 
@@ -184,7 +194,7 @@ folder('my-folder') {
 
 ## GitHub Integration (Multibranch Pipelines)
 
-Options 3-MB and 4A-MB use multibranch pipelines that discover branches/PRs from GitHub.
+Options 3-MB, 4A-MB, and 4B-MB use multibranch pipelines that discover branches/PRs from GitHub.
 
 **Setup:**
 1. Create a GitHub PAT with `repo` and `admin:repo_hook` scopes
@@ -219,7 +229,7 @@ Each pipeline stage (iOS Build, Android Tests, etc.) publishes a **separate GitH
 - Contents: Read (for SCM checkout)
 - Pull requests: Read (for PR discovery)
 - Metadata: Read
-- Commit statuses: Read & Write (optional, suppresses a 403 warning)
+- Commit statuses: Read & Write (required for 4B-MB commit status publishing, also suppresses a 403 warning for other options)
 
 **How it works:**
 - `init.groovy.d/create-github-app-credential.groovy` reads the PEM key at startup and creates a `github-app` credential
@@ -238,6 +248,27 @@ Each pipeline stage (iOS Build, Android Tests, etc.) publishes a **separate GitH
 ```bash
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out github-app-key.pem
 ```
+
+## Smart Re-run (Failed Stage Only)
+
+Options 3-MB and 4A-MB support **smart re-run**: when a pipeline stage fails and you click "Re-run" on the failed GitHub Check, only the failed stages re-execute — stages that already passed are skipped.
+
+**How it works:**
+1. Build detects `GitHubChecksRerunActionCause` via `currentBuild.getBuildCauses()`
+2. Queries GitHub Checks API for current check statuses on the commit
+3. Skips stages whose checks already have `success` conclusion
+4. Runs all other stages (failed, neutral, or missing)
+
+**Manual override — `ONLY_STAGE` parameter:**
+Both 3-MB and 4A-MB accept an `ONLY_STAGE` string parameter. Set it to a stage name (e.g., `"Android Tests"`) to run only that stage and skip everything else.
+
+**Edge cases:**
+- If ALL checks already passed, all stages re-run (assumes user wants a full re-run)
+- If the GitHub API call fails, all stages run (fail-open)
+- Check suffixes `(3-MB)` / `(4A-MB)` prevent cross-contamination between pipeline options
+
+**Option 4B-MB uses Commit Status API instead:**
+Child jobs publish their own commit statuses via `POST /repos/{owner}/{repo}/statuses/{sha}`. No "Re-run" button from GitHub, but each child job can be individually re-triggered from Jenkins UI. The status `target_url` links directly to the child job's build page.
 
 ## Job DSL Notes
 

@@ -574,6 +574,90 @@ multibranchPipelineJob("${folder4amb}/trigger") {
 }
 
 // ============================================
+// OPTION 4B-MB: Orchestrator + Pipeline Jobs with Commit Status API (GitHub)
+// Folder: pipeline-4b-mb
+// Child jobs publish their own GitHub commit statuses (not Checks API)
+// ============================================
+
+def folder4bmb = 'pipeline-4b-mb'
+
+folder(folder4bmb) {
+    description('Option 4B-MB: Orchestrator multibranch + child jobs with commit status API (GitHub)')
+    authorization {
+        userPermissions('dev2', [
+            'hudson.model.Item.Discover',
+            'hudson.model.Item.Read',
+            'hudson.model.Item.Build',
+            'hudson.model.Item.Workspace'
+        ])
+    }
+}
+
+// Orchestrator - multibranch, discovers branches/PRs
+multibranchPipelineJob("${folder4bmb}/trigger") {
+    displayName('Pipeline Trigger (Multibranch)')
+    description('Orchestrator - discovers branches/PRs, triggers child jobs (commit status variant)')
+
+    branchSources {
+        github {
+            id('pipeline-4b-mb-github')
+            scanCredentialsId(githubCredentialsId)
+            repoOwner(githubRepoOwner)
+            repository(githubRepoName)
+            buildOriginBranch(true)
+            buildOriginBranchWithPR(false)
+            buildOriginPRHead(true)
+            buildOriginPRMerge(false)
+            buildForkPRHead(false)
+            buildForkPRMerge(false)
+        }
+    }
+
+    factory {
+        workflowBranchProjectFactory {
+            scriptPath('ci/4b/trigger.Jenkinsfile')
+        }
+    }
+
+    orphanedItemStrategy {
+        discardOldItems {
+            numToKeep(10)
+        }
+    }
+
+    triggers {
+        periodicFolderTrigger {
+            interval('5m')
+        }
+    }
+}
+
+// Child jobs - regular pipelineJobs that publish their own commit statuses
+['ios-build', 'ios-deploy', 'android-build', 'android-deploy',
+ 'ios-unit-tests', 'android-unit-tests', 'ios-linter', 'android-linter'].each { jobName ->
+    pipelineJob("${folder4bmb}/${jobName}") {
+        displayName(jobName.split('-').collect { it.capitalize() }.join(' '))
+        parameters {
+            stringParam('BRANCH_NAME', 'main', 'Branch to build (passed by orchestrator)')
+        }
+        definition {
+            cpsScm {
+                scm {
+                    git {
+                        remote {
+                            url(githubRepoUrl)
+                            credentials(githubCredentialsId)
+                        }
+                        branches('${BRANCH_NAME}')
+                    }
+                }
+                scriptPath("ci/4b/${jobName}.Jenkinsfile")
+            }
+        }
+    }
+}
+
+// ============================================
 // SEED JOB
 // ============================================
 
