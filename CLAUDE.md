@@ -93,10 +93,13 @@ This repo implements 7 different approaches to Jenkins pipelines for comparison:
 │   └── pipeline.groovy            # Job DSL (all options)
 ├── casc/
 │   └── jenkins.yaml               # Jenkins Configuration as Code
+├── init.groovy.d/
+│   └── create-github-app-credential.groovy  # GitHub App credential setup
 ├── Dockerfile
 ├── docker-compose.yml
 ├── plugins.txt
 ├── .env                           # GitHub credentials (gitignored)
+├── github-app-key.pem             # GitHub App private key (gitignored)
 └── scripts/
     └── start.sh
 ```
@@ -185,13 +188,16 @@ Options 3-MB and 4A-MB use multibranch pipelines that discover branches/PRs from
 
 **Setup:**
 1. Create a GitHub PAT with `repo` and `admin:repo_hook` scopes
-2. Add credentials to `.env`:
+2. Create a GitHub App (see "GitHub App & Per-Stage Checks" below)
+3. Add credentials to `.env`:
    ```
    GITHUB_USERNAME=gosuwachu
    GITHUB_PAT=ghp_xxxx
+   GITHUB_APP_ID=<app-id>
    ```
-3. Rebuild: `docker-compose build && docker-compose up -d`
-4. Run seed-job to create the multibranch jobs
+4. Place the GitHub App private key as `github-app-key.pem` (PKCS#8 format, gitignored)
+5. Rebuild: `docker-compose build && docker-compose up -d`
+6. Run seed-job to create the multibranch jobs
 
 **Webhook setup (for instant PR triggers):**
 1. Start ngrok: `ngrok http 8080`
@@ -201,6 +207,37 @@ Options 3-MB and 4A-MB use multibranch pipelines that discover branches/PRs from
    - Events: Push + Pull requests
 
 Without a webhook, Jenkins polls GitHub every 5 minutes via `periodicFolderTrigger`.
+
+## GitHub App & Per-Stage Checks
+
+Each pipeline stage (iOS Build, Android Tests, etc.) publishes a **separate GitHub Check** on PRs, so you can see at a glance which stage passed or failed. This requires GitHub App authentication (PATs cannot use the Checks API).
+
+**GitHub App:** `jenkinsfiles-test-github-app` (App ID in `.env`)
+
+**Required GitHub App permissions:**
+- Checks: Read & Write (for `publishChecks`)
+- Contents: Read (for SCM checkout)
+- Pull requests: Read (for PR discovery)
+- Metadata: Read
+- Commit statuses: Read & Write (optional, suppresses a 403 warning)
+
+**How it works:**
+- `init.groovy.d/create-github-app-credential.groovy` reads the PEM key at startup and creates a `github-app` credential
+- Multibranch pipelines use `github-app` credential for scanning and checkout
+- Jenkinsfiles call `publishChecks` per stage (IN_PROGRESS → SUCCESS/FAILURE)
+- Check names include a suffix like `(3-MB)` or `(4A-MB)` to distinguish pipeline options
+
+**Key files:**
+| File | Purpose |
+|------|---------|
+| `github-app-key.pem` | GitHub App private key (PKCS#8, gitignored) |
+| `init.groovy.d/create-github-app-credential.groovy` | Creates `github-app` credential at startup |
+| `plugins.txt` | Includes `checks-api` and `github-checks` plugins |
+
+**PEM key format:** Must be PKCS#8 (`BEGIN PRIVATE KEY`). Convert from PKCS#1 if needed:
+```bash
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out github-app-key.pem
+```
 
 ## Job DSL Notes
 
