@@ -15,11 +15,11 @@ Access at http://localhost:8080
 |------|----------|--------|
 | admin | admin | Full administrator |
 | dev1 | dev1 | mobile-pipeline, pipeline-1-hybrid, pipeline-2-blueocean |
-| dev2 | dev2 | pipeline-3-skip-params, pipeline-4a |
+| dev2 | dev2 | pipeline-3-skip-params, pipeline-4a, pipeline-3-mb, pipeline-4a-mb |
 
 ## Pipeline Architecture Options
 
-This repo implements 5 different approaches to Jenkins pipelines for comparison:
+This repo implements 7 different approaches to Jenkins pipelines for comparison:
 
 | Folder | Option | Orchestration | Job Type | Re-triggerable |
 |--------|--------|---------------|----------|----------------|
@@ -28,6 +28,8 @@ This repo implements 5 different approaches to Jenkins pipelines for comparison:
 | `pipeline-2-blueocean` | 2: Blue Ocean | Single Jenkinsfile | Pipeline | Via Blue Ocean |
 | `pipeline-3-skip-params` | 3: Skip Params | Single Jenkinsfile | Pipeline | Via params |
 | `pipeline-4a` | 4A: Jenkinsfile + Pipeline Jobs | Jenkinsfile `build job:` | Pipeline | Yes |
+| `pipeline-3-mb` | 3-MB: Skip Params (GitHub) | Single Jenkinsfile | Multibranch | Via params |
+| `pipeline-4a-mb` | 4A-MB: Orchestrator (GitHub) | Jenkinsfile `build job:` | Multibranch + Pipeline | Yes |
 
 ### Option 0: Current (Job DSL Free-Style)
 - **Folder:** `mobile-pipeline`
@@ -61,6 +63,20 @@ This repo implements 5 different approaches to Jenkins pipelines for comparison:
 
 **Note:** `pipelineJob` doesn't support `publishers { downstreamParameterized }`, so Job DSL can only define the jobs, not orchestrate them. Orchestration must be done via Jenkinsfile.
 
+### Option 3-MB: Skip Params Multibranch (GitHub)
+- **Folder:** `pipeline-3-mb`
+- **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
+- **How it works:** Multibranch pipeline discovers branches/PRs from GitHub, runs `Jenkinsfile.3-skip-params`
+- **Pros:** Automatic PR discovery, same skip-params flexibility, GitHub webhook support
+- **Cons:** Manual parameter management, re-runs entire pipeline
+
+### Option 4A-MB: Orchestrator Multibranch + Pipeline Jobs (GitHub)
+- **Folder:** `pipeline-4a-mb`
+- **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
+- **How it works:** Multibranch orchestrator discovers branches/PRs, triggers child `pipelineJob`s passing `BRANCH_NAME` parameter
+- **Pros:** PR discovery, re-triggerable child jobs, all pipeline logic in Jenkinsfiles
+- **Cons:** Child jobs are not multibranch (regular pipeline jobs with branch parameter)
+
 ## Project Structure
 
 ```
@@ -80,9 +96,12 @@ This repo implements 5 different approaches to Jenkins pipelines for comparison:
 ├── Dockerfile
 ├── docker-compose.yml
 ├── plugins.txt
+├── .env                           # GitHub credentials (gitignored)
 └── scripts/
     └── start.sh
 ```
+
+**Companion repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app) - contains Jenkinsfiles for multibranch options (3-MB, 4A-MB).
 
 ## Common Commands
 
@@ -160,6 +179,29 @@ folder('my-folder') {
 - `userPermissionAll(userName)` - grant all permissions to a user
 - `groupPermissions(groupName, permissionsList)` - grant permissions to a group
 
+## GitHub Integration (Multibranch Pipelines)
+
+Options 3-MB and 4A-MB use multibranch pipelines that discover branches/PRs from GitHub.
+
+**Setup:**
+1. Create a GitHub PAT with `repo` and `admin:repo_hook` scopes
+2. Add credentials to `.env`:
+   ```
+   GITHUB_USERNAME=gosuwachu
+   GITHUB_PAT=ghp_xxxx
+   ```
+3. Rebuild: `docker-compose build && docker-compose up -d`
+4. Run seed-job to create the multibranch jobs
+
+**Webhook setup (for instant PR triggers):**
+1. Start ngrok: `ngrok http 8080`
+2. In GitHub repo Settings > Webhooks > Add webhook:
+   - Payload URL: `https://<ngrok-url>/github-webhook/` (trailing slash required)
+   - Content type: `application/json`
+   - Events: Push + Pull requests
+
+Without a webhook, Jenkins polls GitHub every 5 minutes via `periodicFolderTrigger`.
+
 ## Job DSL Notes
 
 - **Git branch is `main`** (not `master`) - configured in `jobs/pipeline.groovy` as `def branch = '*/main'`
@@ -178,3 +220,5 @@ folder('my-folder') {
 **Permission warnings about "ambiguous entries"** - Use explicit `USER:` or `GROUP:` prefixes in CASC, or use `userPermissions()`/`groupPermissions()` in Job DSL.
 
 **Jobs not visible to users** - Ensure folder has `hudson.model.Item.Discover` permission for the user (in addition to `Item.Read`).
+
+**New Job DSL not taking effect after `docker-compose build`** - The `jenkins_home` volume persists old files. Either `docker cp` the updated files into the running container, or reset the volume with `docker-compose down -v && docker-compose up -d`.
