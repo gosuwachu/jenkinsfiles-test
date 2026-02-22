@@ -7,3 +7,5 @@ workflow-aggregator
 pipeline-build-step
 blueocean
 matrix-auth
+checks-api
+github-checks

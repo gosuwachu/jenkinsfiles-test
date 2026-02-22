@@ -436,7 +436,7 @@ pipelineJob("${folder4a}/android-linter") {
 def githubRepoOwner = 'gosuwachu'
 def githubRepoName = 'jenkinsfiles-test-app'
 def githubRepoUrl = "https://github.com/${githubRepoOwner}/${githubRepoName}.git"
-def githubCredentialsId = 'github-pat'
+def githubCredentialsId = 'github-app'
 
 def folder3mb = 'pipeline-3-mb'
 

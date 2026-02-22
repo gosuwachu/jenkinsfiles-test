@@ -11,6 +11,9 @@ RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 COPY casc/ /var/jenkins_home/casc_configs/
 ENV CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/
 
+# Copy init scripts (run at Jenkins startup)
+COPY init.groovy.d/ /var/jenkins_home/init.groovy.d/
+
 # Copy Job DSL scripts and Jenkinsfiles
 COPY jobs/ /var/jenkins_home/jobs-dsl/
 COPY ci/ /var/jenkins_home/jobs-dsl/ci/
