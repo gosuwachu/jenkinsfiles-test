@@ -586,6 +586,7 @@ folder(folder4bmb) {
 }
 
 // Orchestrator - multibranch, discovers branches/PRs
+// Uses github-pat (not github-app) to prevent github-checks plugin from auto-publishing checks
 multibranchPipelineJob("${folder4bmb}/trigger") {
     displayName('Pipeline Trigger (Multibranch)')
     description('Orchestrator - discovers branches/PRs, triggers child jobs (commit status variant)')
@@ -593,15 +594,9 @@ multibranchPipelineJob("${folder4bmb}/trigger") {
     branchSources {
         github {
             id('pipeline-4b-mb-github')
-            scanCredentialsId(githubCredentialsId)
+            scanCredentialsId('github-pat')
             repoOwner(githubRepoOwner)
             repository(githubRepoName)
-            buildOriginBranch(true)
-            buildOriginBranchWithPR(false)
-            buildOriginPRHead(true)
-            buildOriginPRMerge(false)
-            buildForkPRHead(false)
-            buildForkPRMerge(false)
         }
     }
 
@@ -622,9 +617,34 @@ multibranchPipelineJob("${folder4bmb}/trigger") {
             interval('5m')
         }
     }
+
+    // All discovery/filter/notification config as traits (old-style properties break when traits exist)
+    configure {
+        def traits = it / sources / data / 'jenkins.branch.BranchSource' / source / traits
+        // Discover branches (strategyId 3 = all branches)
+        traits << 'org.jenkinsci.plugins.github__branch__source.BranchDiscoveryTrait' {
+            strategyId(3)
+        }
+        // Discover origin PRs — head revision only (strategyId 2 = current PR revision)
+        traits << 'org.jenkinsci.plugins.github__branch__source.OriginPullRequestDiscoveryTrait' {
+            strategyId(2)
+        }
+        // Filter to only main branch and PRs
+        traits << 'jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait' {
+            includes('main PR-*')
+            excludes('')
+        }
+        // Custom commit status context name
+        traits << 'org.jenkinsci.plugins.githubScmTraitNotificationContext.NotificationContextTrait' {
+            contextLabel('Jenkins')
+            typeSuffix(false)
+        }
+    }
 }
 
 // Child jobs - regular pipelineJobs that publish their own commit statuses
+// Uses github-pat (not github-app) for SCM checkout to prevent auto-publishing checks.
+// Child Jenkinsfiles still use github-app via withCredentials for the commit status API.
 ['ios-build', 'ios-deploy', 'android-build', 'android-deploy',
  'ios-unit-tests', 'android-unit-tests', 'ios-linter', 'android-linter'].each { jobName ->
     pipelineJob("${folder4bmb}/${jobName}") {
@@ -638,7 +658,7 @@ multibranchPipelineJob("${folder4bmb}/trigger") {
                     git {
                         remote {
                             url(githubRepoUrl)
-                            credentials(githubCredentialsId)
+                            credentials('github-pat')
                         }
                         branches('${BRANCH_NAME}')
                     }
