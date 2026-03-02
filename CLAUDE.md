@@ -40,7 +40,7 @@ Child jobs publish their own commit statuses via `POST /repos/{owner}/{repo}/sta
 ├── Dockerfile
 ├── docker-compose.yml
 ├── plugins.txt
-├── .env                           # GitHub credentials (gitignored)
+├── .env                           # GitHub + ngrok credentials (gitignored)
 ├── github-app-key.pem             # GitHub App private key (gitignored)
 └── scripts/
     ├── start.sh
@@ -140,11 +140,15 @@ The multibranch pipeline discovers branches/PRs from GitHub.
 6. Run seed-job to create the multibranch jobs
 
 **Webhook setup (for instant PR triggers):**
-1. Start ngrok: `ngrok http 8080`
-2. In GitHub repo Settings > Webhooks > Add webhook:
+1. Add your ngrok auth token to `.env`: `NGROK_AUTHTOKEN=<your-token>`
+2. ngrok starts automatically with `docker-compose up -d`
+3. Get the public URL: `curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"`
+4. In GitHub repo Settings > Webhooks > Add webhook:
    - Payload URL: `https://<ngrok-url>/github-webhook/` (trailing slash required)
    - Content type: `application/json`
    - Events: Push + Pull requests
+
+The ngrok dashboard is available at http://localhost:4040.
 
 Without a webhook, Jenkins polls GitHub every 5 minutes via `periodicFolderTrigger`.
 

@@ -58,7 +58,16 @@ echo "Access Jenkins at: $JENKINS_URL"
 echo "Username: admin"
 echo "Password: admin"
 echo ""
-echo "Pipeline View: $JENKINS_URL/view/Mobile%20Pipeline%20View/"
+
+# Show ngrok tunnel URL if available
+NGROK_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])" 2>/dev/null)
+if [ -n "$NGROK_URL" ]; then
+    echo "ngrok tunnel: $NGROK_URL"
+    echo "GitHub webhook URL: $NGROK_URL/github-webhook/"
+    echo "ngrok dashboard: http://localhost:4040"
+else
+    echo "ngrok: not running (set NGROK_AUTHTOKEN in .env to enable)"
+fi
 echo ""
-echo "To stop Jenkins: docker-compose down"
+echo "To stop: docker-compose down"
 echo "To view logs: docker-compose logs -f"
