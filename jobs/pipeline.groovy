@@ -1,6 +1,6 @@
 // ============================================
 // Mobile CI/CD Pipeline - Job DSL Script
-// Option 4B-MB: Orchestrator + Commit Status API
+// Orchestrator + Commit Status API
 // ============================================
 
 def githubRepoOwner = 'gosuwachu'
@@ -9,15 +9,15 @@ def githubRepoUrl = "https://github.com/${githubRepoOwner}/${githubRepoName}.git
 def githubCredentialsId = 'github-app'
 
 // ============================================
-// OPTION 4B-MB: Orchestrator + Pipeline Jobs with Commit Status API (GitHub)
-// Folder: pipeline-4b-mb
+// Orchestrator + Pipeline Jobs with Commit Status API (GitHub)
+// Folder: pipeline
 // Child jobs publish their own GitHub commit statuses (not Checks API)
 // ============================================
 
-def folder4bmb = 'pipeline-4b-mb'
+def pipelineFolder = 'pipeline'
 
-folder(folder4bmb) {
-    description('Option 4B-MB: Orchestrator multibranch + child jobs with commit status API (GitHub)')
+folder(pipelineFolder) {
+    description('Orchestrator multibranch + child jobs with commit status API (GitHub)')
     authorization {
         userPermissions('dev2', [
             'hudson.model.Item.Discover',
@@ -30,13 +30,13 @@ folder(folder4bmb) {
 
 // Orchestrator - multibranch, discovers branches/PRs
 // Uses github-pat (not github-app) to prevent github-checks plugin from auto-publishing checks
-multibranchPipelineJob("${folder4bmb}/trigger") {
+multibranchPipelineJob("${pipelineFolder}/trigger") {
     displayName('Pipeline Trigger (Multibranch)')
     description('Orchestrator - discovers branches/PRs, triggers child jobs (commit status variant)')
 
     branchSources {
         github {
-            id('pipeline-4b-mb-github')
+            id('pipeline-github')
             scanCredentialsId('github-pat')
             repoOwner(githubRepoOwner)
             repository(githubRepoName)
@@ -90,7 +90,7 @@ multibranchPipelineJob("${folder4bmb}/trigger") {
 // Child Jenkinsfiles still use github-app via withCredentials for the commit status API.
 ['ios-build', 'ios-deploy', 'android-build', 'android-deploy',
  'ios-unit-tests', 'android-unit-tests', 'ios-linter', 'android-linter'].each { jobName ->
-    pipelineJob("${folder4bmb}/${jobName}") {
+    pipelineJob("${pipelineFolder}/${jobName}") {
         displayName(jobName.split('-').collect { it.capitalize() }.join(' '))
         parameters {
             stringParam('BRANCH_NAME', 'main', 'Branch to build (passed by orchestrator)')

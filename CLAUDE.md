@@ -14,13 +14,13 @@ Access at http://localhost:8080
 | User | Password | Access |
 |------|----------|--------|
 | admin | admin | Full administrator |
-| dev2 | dev2 | pipeline-4b-mb |
+| dev2 | dev2 | pipeline |
 
 ## Pipeline Architecture
 
-**Option 4B-MB: Orchestrator + Commit Status API (GitHub)**
+**Orchestrator + Commit Status API (GitHub)**
 
-- **Folder:** `pipeline-4b-mb`
+- **Folder:** `pipeline`
 - **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
 - **How it works:** Multibranch orchestrator discovers branches/PRs, triggers child `pipelineJob`s; each child job publishes its own GitHub commit status (not Checks API)
 - **Pros:** Each child job owns its status reporting, `target_url` links to child job build page, individually re-triggerable from Jenkins
@@ -32,7 +32,7 @@ Child jobs publish their own commit statuses via `POST /repos/{owner}/{repo}/sta
 
 ```
 ├── jobs/
-│   └── pipeline.groovy            # Job DSL (4B-MB + seed job)
+│   └── pipeline.groovy            # Job DSL (pipeline + seed job)
 ├── casc/
 │   └── jenkins.yaml               # Jenkins Configuration as Code
 ├── init.groovy.d/
@@ -71,14 +71,14 @@ Use `scripts/jenkins-api.sh` for API interactions (handles crumb authentication 
 
 ```bash
 # Trigger a build
-./scripts/jenkins-api.sh build pipeline-4b-mb/job/trigger
+./scripts/jenkins-api.sh build pipeline/job/trigger
 
 # Get console log (default: lastBuild)
-./scripts/jenkins-api.sh log pipeline-4b-mb/job/ios-build
-./scripts/jenkins-api.sh log pipeline-4b-mb/job/ios-build 5
+./scripts/jenkins-api.sh log pipeline/job/ios-build
+./scripts/jenkins-api.sh log pipeline/job/ios-build 5
 
 # Get job status
-./scripts/jenkins-api.sh status pipeline-4b-mb/job/trigger
+./scripts/jenkins-api.sh status pipeline/job/trigger
 ```
 
 **Note:** Job paths use `/job/` between folder and job name (e.g., `folder/job/jobname`).
