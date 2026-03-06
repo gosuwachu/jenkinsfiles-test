@@ -98,7 +98,6 @@ multibranchPipelineJob("${pipelineFolder}/trigger") {
 pipelineJob("${pipelineFolder}/omnibus") {
     displayName('Pipeline Runner')
     description('Runs a child Jenkinsfile specified by the JENKINSFILE parameter')
-    concurrentBuild()
     parameters {
         stringParam('BRANCH_NAME', 'main', 'Branch to build (passed by orchestrator)')
         stringParam('JENKINSFILE', '', 'Path to Jenkinsfile (e.g., ci/ios-build.Jenkinsfile)')
