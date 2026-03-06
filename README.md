@@ -58,6 +58,26 @@ http://localhost:8080/job/seed-job/ → Build Now
 
 **Jenkinsfile changes:** Just commit and re-run the pipeline (it pulls from the repo).
 
+## Companion Repos
+
+- **[jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)** — app repo, contains `ci/trigger.Jenkinsfile` (orchestrator)
+- **[jenkinsfiles-test-app-ci](https://github.com/gosuwachu/jenkinsfiles-test-app-ci)** — CI repo, child Jenkinsfiles:
+
+```
+ci/
+├── ios/
+│   ├── ios-build.Jenkinsfile
+│   ├── ios-deploy.Jenkinsfile
+│   ├── ios-linter.Jenkinsfile
+│   ├── ios-ui-tests.Jenkinsfile
+│   └── ios-unit-tests.Jenkinsfile
+└── android/
+    ├── android-build.Jenkinsfile
+    ├── android-deploy.Jenkinsfile
+    ├── android-linter.Jenkinsfile
+    └── android-unit-tests.Jenkinsfile
+```
+
 ## Technical Notes
 
 - `pipelineJob` in Job DSL does **not** support `publishers { downstreamParameterized }` - use Jenkinsfile orchestration instead
