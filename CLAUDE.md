@@ -22,7 +22,8 @@ Access at http://localhost:8080
 
 - **Folder:** `pipeline`
 - **GitHub repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app)
-- **How it works:** Multibranch orchestrator discovers branches/PRs, triggers child `pipelineJob`s; each child job publishes its own GitHub commit status (not Checks API)
+- **CI repo:** [jenkinsfiles-test-app-ci](https://github.com/gosuwachu/jenkinsfiles-test-app-ci) — child Jenkinsfiles (CI step definitions)
+- **How it works:** Multibranch orchestrator discovers branches/PRs in the app repo, triggers the omnibus `pipelineJob` with a `JENKINSFILE` parameter pointing to a Jenkinsfile in the CI repo; each child Jenkinsfile checks out the app repo and publishes its own GitHub commit status (not Checks API)
 - **Pros:** Each child job owns its status reporting, `target_url` links to child job build page, individually re-triggerable from Jenkins
 - **Cons:** No "Re-run" button from GitHub (commit statuses don't support it), no rich check details
 
@@ -64,7 +65,9 @@ Child jobs publish their own commit statuses via `POST /repos/{owner}/{repo}/sta
     └── jenkins-api.sh             # API helper script
 ```
 
-**Companion repo:** [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app) — contains Jenkinsfiles in `ci/` for the multibranch orchestrator and child jobs.
+**Companion repos:**
+- [jenkinsfiles-test-app](https://github.com/gosuwachu/jenkinsfiles-test-app) — app repo, contains `ci/trigger.Jenkinsfile` (orchestrator)
+- [jenkinsfiles-test-app-ci](https://github.com/gosuwachu/jenkinsfiles-test-app-ci) — CI repo, contains child Jenkinsfiles in `ci/` (step definitions)
 
 ## Common Commands
 
@@ -105,7 +108,7 @@ Use `scripts/jenkins-api.sh` for API interactions (handles crumb authentication 
 Edit `jobs/pipeline.groovy` then run the **seed-job** in Jenkins:
 - http://localhost:8080/job/seed-job/ → Build Now
 
-For Jenkinsfile changes, just re-run the job (it pulls from the companion repo).
+For trigger Jenkinsfile changes, push to the app repo and re-run the job. For child Jenkinsfile changes, push to the CI repo (`jenkinsfiles-test-app-ci`) and re-run — the omnibus job pulls from the CI repo at `main`.
 
 Only rebuild Docker when changing `Dockerfile`, `plugins.txt`, or `casc/jenkins.yaml`:
 ```bash

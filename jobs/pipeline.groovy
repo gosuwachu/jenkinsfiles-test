@@ -8,6 +8,9 @@ def githubRepoName = 'jenkinsfiles-test-app'
 def githubRepoUrl = "https://github.com/${githubRepoOwner}/${githubRepoName}.git"
 def githubCredentialsId = 'github-app'
 
+def ciRepoName = 'jenkinsfiles-test-app-ci'
+def ciRepoUrl = "https://github.com/${githubRepoOwner}/${ciRepoName}.git"
+
 // ============================================
 // Orchestrator + Pipeline Jobs with Commit Status API (GitHub)
 // Folder: pipeline
@@ -107,10 +110,10 @@ pipelineJob("${pipelineFolder}/omnibus") {
             scm {
                 git {
                     remote {
-                        url(githubRepoUrl)
+                        url(ciRepoUrl)
                         credentials('github-pat')
                     }
-                    branches('${BRANCH_NAME}')
+                    branches('main')
                 }
             }
             scriptPath('${JENKINSFILE}')
@@ -182,7 +185,7 @@ pipelineJob("${pipelineFolder}/ios-ui-tests") {
             scm {
                 git {
                     remote {
-                        url(githubRepoUrl)
+                        url(ciRepoUrl)
                         credentials('github-pat')
                     }
                     branches('main')
