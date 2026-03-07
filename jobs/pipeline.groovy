@@ -47,7 +47,7 @@ folder(supportFolder) {
 // Orchestrator - multibranch, discovers branches/PRs
 // Uses github-pat (not github-app) to prevent github-checks plugin from auto-publishing checks
 multibranchPipelineJob("${pipelineFolder}/trigger") {
-    displayName('CI/PR Pipeline')
+    displayName('CI / PR Pipeline')
     description('Orchestrator - runs CI checks on the main branch, discovers PRs')
 
     branchSources {
