@@ -48,7 +48,7 @@ folder(supportFolder) {
 // Uses github-pat (not github-app) to prevent github-checks plugin from auto-publishing checks
 multibranchPipelineJob("${pipelineFolder}/trigger") {
     displayName('CI / PR Pipeline')
-    description('Orchestrator - runs CI checks on the main branch, discovers PRs')
+    description('Runs CI checks on the main branch, discovers PRs')
 
     branchSources {
         github {
@@ -209,6 +209,58 @@ pipelineJob("${supportFolder}/ios-ui-tests") {
                 }
             }
             scriptPath('ci/ios/ios-ui-tests.Jenkinsfile')
+        }
+    }
+}
+
+// ============================================
+// Alpha Build Pipelines (manually triggered)
+// ============================================
+
+pipelineJob("${supportFolder}/ios-alpha") {
+    displayName('iOS Alpha Build')
+    description('Manually triggered iOS alpha build — builds and deploys iOS')
+    parameters {
+        stringParam('BRANCH_NAME', 'main', 'Branch to build')
+        stringParam('COMMIT_SHA', '', 'App repo commit SHA (leave empty for branch HEAD)')
+        stringParam('CI_BRANCH', 'main', 'CI repo branch to checkout Jenkinsfiles from')
+    }
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
+                        url(ciRepoUrl)
+                        credentials('github-pat')
+                    }
+                    branches('${CI_BRANCH}')
+                }
+            }
+            scriptPath('ci/alpha/ios-alpha.Jenkinsfile')
+        }
+    }
+}
+
+pipelineJob("${supportFolder}/android-alpha") {
+    displayName('Android Alpha Build')
+    description('Manually triggered Android alpha build — builds and deploys Android')
+    parameters {
+        stringParam('BRANCH_NAME', 'main', 'Branch to build')
+        stringParam('COMMIT_SHA', '', 'App repo commit SHA (leave empty for branch HEAD)')
+        stringParam('CI_BRANCH', 'main', 'CI repo branch to checkout Jenkinsfiles from')
+    }
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    remote {
+                        url(ciRepoUrl)
+                        credentials('github-pat')
+                    }
+                    branches('${CI_BRANCH}')
+                }
+            }
+            scriptPath('ci/alpha/android-alpha.Jenkinsfile')
         }
     }
 }
