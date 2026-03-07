@@ -214,6 +214,17 @@ This two-layer approach ensures non-collaborators cannot run CI or inject malici
 
 **Job DSL API Reference:** http://localhost:8080/plugin/job-dsl/api-viewer/index.html (when Jenkins is running)
 
+## After Making Changes
+
+Always follow this workflow after completing code changes:
+1. **Commit** changes in all affected repos
+2. **Push** companion repos (jenkinsfiles-test-app, jenkinsfiles-test-app-ci) since Jenkins pulls from GitHub
+3. **Deploy** to Jenkins:
+   - If only `jobs/pipeline.groovy` changed: `docker cp jobs/pipeline.groovy jenkins-test:/var/jenkins_home/jobs-dsl/pipeline.groovy` then `./scripts/jenkins-api.sh build seed-job`
+   - If `Dockerfile`, `plugins.txt`, or `casc/jenkins.yaml` changed: `docker-compose build && docker-compose up -d`
+4. **Test** by triggering a build: `./scripts/jenkins-api.sh build pipeline/job/trigger/job/main CI_BRANCH=main`
+5. **Verify** results via `./scripts/jenkins-api.sh status` and `./scripts/jenkins-api.sh log`
+
 ## Troubleshooting
 
 **Permission warnings about "ambiguous entries"** — Use explicit `USER:` or `GROUP:` prefixes in CASC, or use `userPermissions()`/`groupPermissions()` in Job DSL.

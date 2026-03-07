@@ -30,12 +30,24 @@ api_post() {
 case "$1" in
     build)
         if [ -z "$2" ]; then
-            echo "Usage: $0 build <job-path>"
+            echo "Usage: $0 build <job-path> [param=value ...]"
             echo "Example: $0 build pipeline/job/trigger"
+            echo "Example: $0 build pipeline/job/trigger/job/main CI_BRANCH=main"
             exit 1
         fi
-        echo "Triggering build for $2..."
-        api_post "/job/$2/build"
+        JOB_PATH="$2"
+        shift 2
+        if [ $# -gt 0 ]; then
+            PARAMS=""
+            for p in "$@"; do
+                PARAMS="${PARAMS}&${p}"
+            done
+            echo "Triggering parameterized build for $JOB_PATH..."
+            api_post "/job/$JOB_PATH/buildWithParameters?${PARAMS#&}"
+        else
+            echo "Triggering build for $JOB_PATH..."
+            api_post "/job/$JOB_PATH/build"
+        fi
         echo "Build triggered"
         ;;
     log)
