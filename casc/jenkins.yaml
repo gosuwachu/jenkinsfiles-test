@@ -1,6 +1,7 @@
 jenkins:
   systemMessage: "Jenkins Test Environment - Configured automatically via JCasC"
   numExecutors: 4
+  quietPeriod: 0
   mode: NORMAL
 
   securityRealm:
@@ -56,6 +57,8 @@ credentials:
               description: "GitHub PAT for multibranch pipelines"
 
 unclassified:
+  globalDefaultFlowDurabilityLevel:
+    durabilityHint: PERFORMANCE_OPTIMIZED
   location:
     url: http://localhost:8080/
 

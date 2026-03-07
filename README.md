@@ -83,3 +83,11 @@ ci/
 - `pipelineJob` in Job DSL does **not** support `publishers { downstreamParameterized }` - use Jenkinsfile orchestration instead
 - Job DSL `targets()` only accepts relative paths (Ant GLOB pattern)
 - Local git repos require `-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true`
+
+## Design Decisions
+
+### Why jobs are defined as Jenkinsfiles?
+The alternative is to pass a NODE_LABEL parameter and a path to the shell script, but this will mean that we don't have control over which jobs have access to which credentials. Also, for jobs like iOS UI tests, Jenkinsfile gives us possibly to dynamically parallelize running the UI tests on multiple agents.
+
+### Trigger job as a shared library
+Trigger job is loaded as a shared library so that we can see a visualization of the checks that are going to run. We can also see this way which checks have failed in Jenkins for each change without implementing custom UI. 
