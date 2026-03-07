@@ -107,6 +107,7 @@ pipelineJob("${pipelineFolder}/omnibus") {
         stringParam('CHANGE_ID', '', 'Pull request number (passed by orchestrator, empty for branch builds)')
         stringParam('JENKINSFILE', '', 'Path to Jenkinsfile (e.g., ci/ios/ios-build.Jenkinsfile)')
         stringParam('CI_BRANCH', 'main', 'CI repo branch to checkout Jenkinsfiles from')
+        stringParam('CONTEXT_JSON', '', 'JSON context from triggering build step')
     }
     definition {
         cpsScm {
