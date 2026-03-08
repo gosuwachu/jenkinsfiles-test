@@ -7,7 +7,7 @@ jenkins:
   globalNodeProperties:
     - envVars:
         env:
-          - key: "DASHBOARD_URL"
+          - key: DASHBOARD_URL
             value: "http://localhost:3000"
 
   securityRealm:
